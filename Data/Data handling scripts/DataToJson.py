@@ -49,9 +49,16 @@ def xlsxToDict(filepath):
     dict["SpectralX"] = matrixform[0][6:]
     for column in matrixform:
         if str(column[3]) != "nan" and str(column[6]) != "nan" and str(column[100]) != "nan":
-            dict[str(int(column[3]))+" nm"] = {"Data": column[6:],    \
-                                          "Excitation": column[3]\
-                                    }
+            if str(column[4]) == "nan":
+                dict["SpectralX"] = matrixform[0][6:]
+                dict[str(int(column[3]))+" nm"] = {"Data": column[6:],    \
+                                            "Excitation": column[3]         \
+                                        }
+            else:
+                dict["SpectralX"] = matrixform[0][4:]
+                dict[str(int(column[3]))+" nm"] = {"Data": list(column[4:]),    \
+                                            "Excitation": column[3]         \
+                                        }
     
     return dict
 

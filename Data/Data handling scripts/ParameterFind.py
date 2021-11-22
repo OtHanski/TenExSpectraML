@@ -12,6 +12,8 @@ def main():
         for key in data:
             if key != "SpectralX":
                 # FWHM, peak, base
+                npinput = np.array([SpectralX,data[key]["Data"]])
+                print(npinput)
                 params = GetParams(np.array([SpectralX,data[key]["Data"]]))
                 data[key]["FWHM"] = params[0]
                 data[key]["peak"] = params[1]
