@@ -1,5 +1,6 @@
 import os
 import json
+import numpy as np
 import tkinter as tk
 import pandas as pd
 from tkinter import filedialog
@@ -63,31 +64,36 @@ def ReadToPandas(filelist = os.listdir("../Data/TenExSpectra_JSON")):
 # simple usage "from GimmePandas import ReadToPandas", call as ReadToPandas()
 # You can either manually choose files to read (as argument) or let the function import everything as default
 # Reads Json files, returns as pandas dataframe with columns as listed below
-    column_names = ["Excitation", "Baseline", "Peak", "FWHM points", "Xdata", "Reflectivity"]
-    dataf = pd.DataFrame(columns = column_names, dtype = object)
+    column_names = ["Excitation", "Baseline", "Peak"]
+    dataf = pd.DataFrame(columns = column_names, dtype = "float32")
     dataf
-    dataf["Xdata"].astype(object)
-    dataf["Reflectivity"].astype(object)
-    dataf["FWHM points"].astype(object)
+    #dataf["Xdata"].astype(object)
+    #dataf["Reflectivity"].astype(object)
+    #dataf["FWHM points"].astype(object)
     dftemp = dataf
-    
+
     if filelist == os.listdir("../Data/TenExSpectra_JSON"):
         for i in range(len(filelist)):
             filelist[i] = "../Data/TenExSpectra_JSON/"+filelist[i]
     
     for filepath in filelist:
         dict = ReadJson(filepath)
-        X = dict["SpectralX"]
+        try:
+            X = np.array(dict["SpectralX"]).astype("float32")
+        except:
+            X= np.empty(100)
         for key in dict:
             if key != "SpectralX":
                 #dftemp = pd.DataFrame({"Excitation": dict[key]["Excitation"], "Xdata": X, "Reflectivity": dict[key]["Data"],\
                 #                        "Baseline": dict[key]["baseline"], "Peak": dict[key]["peak"], "FHHM points": dict[key]["FWHM"]},dtype = object)
+                #dftemp.at[1,"Xdata"] = X
+                #dftemp.at[1,"Reflectivity"] = np.array(dict[key]["Data"]).astype("float32")
+                for i in range(len(X)):
+                    dftemp.at[1,str(X[i])] = dict[key]["Data"][i]
                 dftemp.at[1,"Excitation"] = dict[key]["Excitation"]
-                dftemp.at[1,"Xdata"] = X
-                dftemp.at[1,"Reflectivity"] = dict[key]["Data"]
                 dftemp.at[1,"Baseline"] = dict[key]["baseline"]
                 dftemp.at[1,"Peak"] = dict[key]["peak"]
-                dftemp.at[1,"FWHM points"] = dict[key]["FWHM"]
+                #dftemp.at[1,"FWHM points"] = dict[key]["FWHM"]
                 dataf = pd.concat([dataf, dftemp], ignore_index = True)
     print("Dataframe loaded")
     
@@ -115,10 +121,45 @@ def ReadToPandas2(filelist = os.listdir("../Data/TenExSpectra_JSON")):
                 dftemp.at[1,"Excitation"] = dict[key]["Excitation"]
                 dftemp.at[1,"Baseline"] = dict[key]["baseline"]
                 dftemp.at[1,"Peak"] = dict[key]["peak"]
-                dftemp.at[1,"FWHM points"] = dict[key]["FWHM"]
+                #dftemp.at[1,"FWHM points"] = dict[key]["FWHM"]
                 for i in range(len(X)):
                     dftemp.at[1,str(X[i])] = dict[key]["Data"][i]
                 dataf = pd.concat([dataf, dftemp], ignore_index = True)
     print("Dataframe loaded")
     
     return dataf
+    
+def ReadToNumpy(filelist = os.listdir("../Data/TenExSpectra_JSON")):
+    # Returns 4 arrays, [Xdata], [[Ydata],[Ydata]...], Baselines, Peaks
+    if filelist == os.listdir("../Data/TenExSpectra_JSON"):
+        for i in range(len(filelist)):
+            filelist[i] = "../Data/TenExSpectra_JSON/"+filelist[i]
+
+    Yarray = []
+    BaselineArray = []
+    PeakArray = []
+    
+    for filepath in filelist:
+        dict = ReadJson(filepath)
+        X = np.array(dict["SpectralX"]).astype("float32")
+        for key in dict:
+            if key != "SpectralX":
+                #dftemp = pd.DataFrame({"Excitation": dict[key]["Excitation"], "Xdata": X, "Reflectivity": dict[key]["Data"],\
+                #                        "Baseline": dict[key]["baseline"], "Peak": dict[key]["peak"], "FHHM points": dict[key]["FWHM"]},dtype = object)
+                Y = np.array(dict[key]["Excitation"]).astype("float32")
+                Yarray.append(Y)
+                Baseline = dict[key]["baseline"]
+                BaselineArray.append(Baseline)
+                Peak = dict[key]["peak"]
+                PeakArray.append(Peak)
+                #dftemp.at[1,"FWHM points"] = dict[key]["FWHM"]
+                for i in range(len(X)):
+                    dftemp.at[1,str(X[i])] = dict[key]["Data"][i]
+                dataf = pd.concat([dataf, dftemp], ignore_index = True)
+    
+    Yarray = np.array(Yarray)
+    BaselineArray = np.array(BaselineArray).astype("float32")
+    PeakArray = np.array(PeakArray).astype("float32")
+    print("NumpyData loaded")
+    
+    return X, Yarray, BaselineArray, PeakArray
